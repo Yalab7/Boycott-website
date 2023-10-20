@@ -3,12 +3,19 @@ const streamifier = require("streamifier");
 const cloudinary = require("../utils/cloudinary");
 const catchAsync = require("../utils/catchAsync");
 const Product = require("../models/productModel");
+const multer = require("multer");
+const streamifier = require("streamifier");
+const cloudinary = require("../utils/cloudinary");
+const catchAsync = require("../utils/catchAsync");
+const Product = require("../models/productModel");
 
 //Multer
 const multerTempStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, callback) => {
   if (
+    file.mimetype.startsWith("image") ||
+    file.mimetype === "application/octet-stream" //for cross platform compatibility
     file.mimetype.startsWith("image") ||
     file.mimetype === "application/octet-stream" //for cross platform compatibility
   ) {
@@ -24,6 +31,7 @@ const upload = multer({
   storage: multerTempStorage,
   fileFilter: multerFilter,
 });
+exports.uploadProductPhoto = upload.single("image");
 exports.uploadProductPhoto = upload.single("image");
 
 exports.getProducts = catchAsync(async (req, res, next) => {
@@ -66,6 +74,7 @@ exports.createProduct = catchAsync(async (req, res, next) => {
     { folder: "products" },
     async (error, result) => {
       const createdProduct = await Product.create({
+      const createdProduct = await Product.create({
         name,
         category,
         references: referencesArr,
@@ -74,7 +83,11 @@ exports.createProduct = catchAsync(async (req, res, next) => {
         img_url: result.secure_url,
       }).catch((err) => {
         console.log("lolxd");
+      }).catch((err) => {
+        console.log("lolxd");
         return res.status(400).json({
+          status: "fail",
+          message: "Could not Create Product",
           status: "fail",
           message: "Could not Create Product",
         });
@@ -84,11 +97,22 @@ exports.createProduct = catchAsync(async (req, res, next) => {
       console.log("still trying to send");
       res.status(200).json({
         status: "success",
+      });
+      //if an error happned while uploading the image
+      if (res.headersSent) return;
+      console.log("still trying to send");
+      res.status(200).json({
+        status: "success",
         data: {
+          product: createdProduct,
           product: createdProduct,
         },
       });
+      });
     }
+  );
+  streamifier.createReadStream(imageFile.buffer).pipe(cloudUploadStream);
+});
   );
   streamifier.createReadStream(imageFile.buffer).pipe(cloudUploadStream);
 });
@@ -104,6 +128,20 @@ exports.getAProduct = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: "success",
+exports.getAProduct = catchAsync(async (req, res, next) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    return res.status(404).json({
+      status: "fail",
+      message: "No such product found with id",
+    });
+  }
+
+  return res.status(200).json({
+    status: "success",
     data: product,
+  });
+});
+
   });
 });
