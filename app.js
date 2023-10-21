@@ -7,9 +7,9 @@ const productRouter = require("./routes/productRoute");
 
 dotenv.config({ path: "./config.env" });
 const app = express();
-app.enable('trust proxy');
-// app.use(cors());
-// app.use(helmet());
+app.enable("trust proxy");
+app.use(cors());
+app.use(helmet());
 app.use(express.json());
 
 app.use("/api/v1", (req, res, next) => {
