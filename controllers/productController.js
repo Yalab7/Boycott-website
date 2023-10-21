@@ -25,7 +25,6 @@ const upload = multer({
   fileFilter: multerFilter,
 });
 exports.uploadProductPhoto = upload.single("image");
-exports.uploadProductPhoto = upload.single("image");
 
 exports.getProducts = catchAsync(async (req, res, next) => {
   //Pagination Setup
@@ -100,12 +99,11 @@ exports.getAProduct = catchAsync(async (req, res, next) => {
     if (!product) {
       throw new Error();
     }
-  
+
     return res.status(200).json({
       status: "success",
       data: product,
     });
-
   } catch (err) {
     return res.status(404).json({
       status: "fail",
@@ -127,5 +125,4 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
     status: "success",
     data: products,
   });
-
 });
