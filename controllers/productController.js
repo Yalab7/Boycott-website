@@ -95,18 +95,23 @@ exports.createProduct = catchAsync(async (req, res, next) => {
 });
 
 exports.getAProduct = catchAsync(async (req, res, next) => {
-  const product = await Product.findById(req.params.id);
-  if (!product) {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      throw new Error();
+    }
+  
+    return res.status(200).json({
+      status: "success",
+      data: product,
+    });
+
+  } catch (err) {
     return res.status(404).json({
       status: "fail",
       message: "No such product found with id",
     });
   }
-
-  return res.status(200).json({
-    status: "success",
-    data: product,
-  });
 });
 
 exports.searchProducts = catchAsync(async (req, res, next) => {
