@@ -24,7 +24,6 @@ const upload = multer({
   storage: multerTempStorage,
   fileFilter: multerFilter,
 });
-exports.uploadProductPhoto = upload.single("image");
 
 exports.getProducts = catchAsync(async (req, res, next) => {
   //Pagination Setup
@@ -54,44 +53,90 @@ exports.getProducts = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.uploadProductPhoto = upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "alt1_img", maxCount: 1 },
+  { name: "alt2_img", maxCount: 1 },
+  { name: "alt3_img", maxCount: 1 },
+]);
+
 exports.createProduct = catchAsync(async (req, res, next) => {
-  const imageFile = req.file != null ? req.file : null;
-  console.log(req.file);
+  console.log(req.files);
+  console.log(req.body);
+
+  const productImage = req.files.image[0];
+  const productAlt1Image = req.files.alt1_img ? req.files.alt1_img[0] : null;
+  const productAlt2Image = req.files.alt2_img ? req.files.alt2_img[0] : null;
+  const productAlt3Image = req.files.alt3_img ? req.files.alt3_img[0] : null;
+  let productAlternatives = [productAlt1Image, productAlt2Image, productAlt3Image]
+
   const { name, category, references, alternatives, notes } = req.body;
   const referencesArr = references != null ? references.split(",") : null;
-  const alternativesArr = alternatives != null ? alternatives.split(",") : null;
-  console.log("references", references);
-  console.log("alternatives", alternatives);
-  const cloudUploadStream = cloudinary.uploader.upload_stream(
-    { folder: "products" },
-    async (error, result) => {
-      const createdProduct = await Product.create({
-        name,
-        category,
-        references: referencesArr,
-        alternatives: alternativesArr,
-        notes,
-        img_url: result.secure_url,
-      }).catch((err) => {
-        console.log("lolxd");
-        return res.status(400).json({
-          status: "fail",
-          message: "Could not Create Product",
-        });
-      });
-      //if an error happned while uploading the image
-      if (res.headersSent) return;
-      console.log("still trying to send");
-      res.status(200).json({
-        status: "success",
-        data: {
-          product: createdProduct,
-        },
-      });
+  let alternativesArr = alternatives != null ? alternatives.split(",") : null;
+  alternativesArr = alternativesArr.map((alt, index) => {
+    return { name: alt, imgFile: productAlternatives[index] };
+  });
+
+  try {
+    console.log("Uploading to cloudinary...")
+    let productImageUrl = await uploadImage(productImage.buffer);
+    for (const alt of alternativesArr) {
+      if (alt.imgFile) {
+        alt.img_url = await uploadImage(alt.imgFile.buffer);
+        delete alt.imgFile;
+      }
     }
-  );
-  streamifier.createReadStream(imageFile.buffer).pipe(cloudUploadStream);
+          
+    console.log("Creating product...")
+    console.log(alternativesArr)
+    console.log("img_url: " + productImageUrl)
+    const newProduct = await Product.create({
+      name,
+      category,
+      img_url: productImageUrl,
+      references: referencesArr,
+      alternatives: alternativesArr,
+      notes,
+    });
+
+    return res.status(201).json({
+      status: "success",
+      data: newProduct,
+    });
+
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({
+      status: "fail",
+      message: err.message,
+    });
+  }
+
+
+  
 });
+
+async function uploadImage(imageBuffer) {
+  return new Promise((resolve, reject) => {
+    // Create a writable stream to upload the image to Cloudinary
+    const cloudUploadStream = cloudinary.uploader.upload_stream(
+      { folder: "product_images" },
+      (error, result) => {
+        if (error) {
+          console.error('Error uploading to Cloudinary:', error);
+          reject(error);
+        } else {
+          console.log('Image uploaded to Cloudinary:', result);
+          resolve(result.secure_url);
+        }
+      }
+    );
+
+    // Create a readable stream from the image buffer and pipe it to the Cloudinary upload stream
+    streamifier.createReadStream(imageBuffer).pipe(cloudUploadStream);
+  });
+}
+
 
 exports.getAProduct = catchAsync(async (req, res, next) => {
   try {
