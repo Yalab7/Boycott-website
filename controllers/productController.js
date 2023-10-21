@@ -108,3 +108,19 @@ exports.getAProduct = catchAsync(async (req, res, next) => {
     data: product,
   });
 });
+
+exports.searchProducts = catchAsync(async (req, res, next) => {
+  // limit results to 10
+  const limit = 10;
+  const searchQuery = req.params.query || "";
+
+  const products = await Product.find({
+    name: { $regex: searchQuery, $options: "i" },
+  }).limit(limit);
+
+  return res.status(200).json({
+    status: "success",
+    data: products,
+  });
+
+});

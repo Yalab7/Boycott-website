@@ -55,6 +55,8 @@ const productSchema= new mongoose.Schema({
     },
 });
 
+productSchema.index({ name: 1, category: 1 }, { unique: true });
+
 // //All find querries
 productSchema.pre(/^find/, function (next) {
     this.select({
