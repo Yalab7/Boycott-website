@@ -12,7 +12,8 @@ app.enable("trust proxy");
 corsOptions={
 origin: "*" //#TODO: Add the link of the deployed front end later
 };
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
+app.use(cors());
 app.use(helmet());
 app.use(express.json());
 
