@@ -10,7 +10,7 @@ const app = express();
 app.enable("trust proxy");
 
 corsOptions={
-origin: "*" //#TODO: Add the link of the deployed front end later
+origin: "http://localhost:3000" //#TODO: Add the link of the deployed front end later
 };
 app.use(cors(corsOptions));
 app.use(helmet());
