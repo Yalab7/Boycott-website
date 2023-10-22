@@ -8,7 +8,11 @@ const productRouter = require("./routes/productRoute");
 dotenv.config({ path: "./config.env" });
 const app = express();
 app.enable("trust proxy");
-app.use(cors());
+
+corsOptions={
+origin:"localhost:3000"
+};
+app.use(cors(corsOptions));
 app.use(helmet());
 app.use(express.json());
 
