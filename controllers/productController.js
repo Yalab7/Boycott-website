@@ -71,8 +71,8 @@ exports.createProduct = catchAsync(async (req, res, next) => {
   let productAlternatives = [productAlt1Image, productAlt2Image, productAlt3Image]
 
   const { name, category, references, alternatives, notes } = req.body;
-  const referencesArr = references != null ? references.split(",") : null;
-  let alternativesArr = alternatives != null ? alternatives.split(",") : null;
+  const referencesArr = references != null ? JSON.parse(references) : null;
+  let alternativesArr = alternatives != null ? JSON.parse(alternatives) : null;
   alternativesArr = alternativesArr.map((alt, index) => {
     return { name: alt, imgFile: productAlternatives[index] };
   });
