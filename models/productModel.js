@@ -4,9 +4,7 @@ const validator = require("validator");
 const productAlternativeSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [false, ""],
-    maxlength: [40, "An alternative name must be at most 40 characters"],
-    minlength: [1, "An alternative name must be at least 1 character"],
+    required: [false, ""]
   },
   img_url: {
     type: String,
