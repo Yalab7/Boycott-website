@@ -26,32 +26,47 @@ const upload = multer({
 });
 
 exports.getProducts = catchAsync(async (req, res, next) => {
-  //Pagination Setup
+  // Pagination Setup
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 20;
   const skip = (page - 1) * limit;
 
   let goQuery = 1;
   let productsData = [];
+  let totalProducts = 0;
+
   if (req.query.category && goQuery) {
-    productsData = await Product.find({
-      category: req.query.category,
-    })
+    const category = req.query.category;
+
+    // Query products in the specified category
+    const productsInCategory = await Product.find({ category });
+    totalProducts = productsInCategory.length;
+
+    productsData = await Product.find({ category })
       .skip(skip)
       .limit(limit);
+
     goQuery = false;
   }
 
-  //no parameter case
+  // No parameter case
   if (goQuery) {
+    // Query all products
+    const allProducts = await Product.find();
+    totalProducts = allProducts.length;
+
     productsData = await Product.find().skip(skip).limit(limit);
   }
 
+  // Calculate the number of pages
+  const totalPages = Math.ceil(totalProducts / limit);
+
   return res.status(200).json({
     status: "success",
-    data: { products: productsData },
+    data: { products: productsData, totalPages },
   });
 });
+
 
 exports.uploadProductPhoto = upload.fields([
   { name: "image", maxCount: 1 },
