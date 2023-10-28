@@ -69,6 +69,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [false, ""],
   },
+  isSuspected: {
+    type: Boolean,
+    default: false
+  }
 });
 
 productSchema.index({ name: 1, category: 1 }, { unique: true });
