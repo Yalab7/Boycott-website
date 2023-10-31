@@ -1,10 +1,48 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 
+const categorySchema = new mongoose.Schema({
+  name: {
+    ar: {
+      type: String,
+      required: [true, "A category must have an Arabic name."],
+      maxlength: [40, "A category name must be at most 40 characters"],
+      minlength: [1, "A category name must be at least 1 character"],
+    },
+    en: {
+      type: String,
+      required: [true, "A category must have an English name."],
+      maxlength: [40, "A category name must be at most 40 characters"],
+      minlength: [1, "A category name must be at least 1 character"],
+    },
+  }
+});
+
+categorySchema.index(
+  { name: 1 },
+  {
+    unique: true,
+  }
+);
+
+const Category = mongoose.model("Category", categorySchema);
+
+
+
 const productAlternativeSchema = new mongoose.Schema({
   name: {
-    type: String,
-    required: [false, ""]
+    ar: {
+      type: String,
+      required: [true, "An alternative must have an Arabic name."],
+      maxlength: [40, "An alternative name must be at most 40 characters"],
+      minlength: [1, "An alternative name must be at least 1 character"],
+    },
+    en: {
+      type: String,
+      required: [true, "An alternative must have an English name."],
+      maxlength: [40, "An alternative name must be at most 40 characters"],
+      minlength: [1, "An alternative name must be at least 1 character"],
+    },
   },
   img_url: {
     type: String,
@@ -23,18 +61,27 @@ const productAlternativeSchema = new mongoose.Schema({
   },
 });
 
+const ProductAlternative = mongoose.model("ProductAlternative", productAlternativeSchema);
+
 const productSchema = new mongoose.Schema({
   name: {
-    type: String,
-    required: [true, "A product must have a name."],
-    maxlength: [40, "A product name must be at most 40 characters"],
-    minlength: [1, "A product name must be at least 1 character"],
+    ar: {
+      type: String,
+      required: [true, "A product must have an Arabic name."],
+      maxlength: [40, "A product name must be at most 40 characters"],
+      minlength: [1, "A product name must be at least 1 character"],
+    },
+    en: {
+      type: String,
+      required: [true, "A product must have an English name."],
+      maxlength: [40, "A product name must be at most 40 characters"],
+      minlength: [1, "A product name must be at least 1 character"],
+    },
   },
   category: {
-    type: String,
+    type: mongoose.Schema.ObjectId,
+    ref: "Category",
     required: [true, "A product must have a category."],
-    maxlength: [40, "A product category name must be at most 40 characters"],
-    minlength: [1, "A product category name must be at least 1 character"],
   },
   img_url: {
     type: String,
@@ -51,23 +98,27 @@ const productSchema = new mongoose.Schema({
     ],
     required: [true, "A product must have an image."],
   },
-  references: {
-    type: [String],
-    default: [],
-    validator: function (array) {
-      return array.every(
-        (v) => typeof v === "string" && v.length > 0 && v.length < 80
-      );
+  boycott_why: {
+    en: {
+      type: String,
+      required: [true, "A product must have an English boycott reason."],
+      maxlength: [200, "A boycott reason must be at most 200 characters"],
+      minlength: [1, "A boycott reason must be at least 1 character"],
     },
+    ar: {
+      type: String,
+      required: [true, "A product must have an Arabic boycott reason."],
+      maxlength: [200, "A boycott reason must be at most 200 characters"],
+      minlength: [1, "A boycott reason must be at least 1 character"],
+    },
+  },
+  sources: {
+    type: [String], // array of urls
+    default: [],
   },
   alternatives: {
     type: [productAlternativeSchema],
     default: [],
-    required: [false, ""],
-  },
-  notes: {
-    type: String,
-    required: [false, ""],
   },
   isSuspected: {
     type: Boolean,
@@ -75,7 +126,16 @@ const productSchema = new mongoose.Schema({
   }
 });
 
-productSchema.index({ name: 1, category: 1 }, { unique: true });
+productSchema.index(
+  { name: 1, category: 1 },
+  {
+    unique: true,
+  }
+);
+productSchema.index(
+  {'name.en': 'text', 'name.ar': 'text'}
+)
+
 
 // //All find querries
 productSchema.pre(/^find/, function (next) {
@@ -87,4 +147,4 @@ productSchema.pre(/^find/, function (next) {
 
 const Product = mongoose.model("Product", productSchema);
 
-module.exports = Product;
+module.exports = { Product, Category, ProductAlternative };
