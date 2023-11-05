@@ -178,12 +178,56 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   const limit = 10;
   const searchQuery = req.params.query || "";
 
-  const products = await Product.find({
+  
+  const boycottProducts = await Product.find({
     name: { $regex: searchQuery, $options: "i" },
   }).limit(limit);
 
+  const altProductsResults = await Product.find({
+    alternatives: { $elemMatch: { name: { $regex: searchQuery, $options: "i" } } },
+  }).limit(limit);
+
+  let alternativeProducts = [];
+  altProductsResults.forEach((product) => {
+    product.alternatives.forEach((alt) => {
+      if (alt.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        alternativeProducts.push({
+          name: alt.name,
+          category: product.category,
+          img_url: alt.img_url,
+        });
+      }
+    });
+  });
+
+  // remove duplicates as alternative product may appear in multiple products
+  alternativeProducts = alternativeProducts.filter(
+    (product, index, self) =>
+      index === self.findIndex((t) => {
+        // remove spaces from names before comparing
+        return t.name.replace(/\s/g, "").toLowerCase() === product.name.replace(/\s/g, "").toLowerCase();
+      })
+  );
+
+  console.log(alternativeProducts);
+  console.log(boycottProducts);
+
+  returnedResults = []
+  // add a boycott (flag) field to each product and alternative
+  boycottProducts.forEach((product) => {
+    returnedResults.push({ ...product._doc, boycott: true });
+  });
+
+  alternativeProducts.forEach((product) => {
+    returnedResults.push({ ...product, boycott: false });
+  });
+
+  console.log(returnedResults); 
+
+
   return res.status(200).json({
     status: "success",
-    data: products,
+    data: returnedResults,
   });
 });
+
