@@ -187,3 +187,45 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
     data: products,
   });
 });
+
+exports.uploadNewAltPhoto = upload.fields([
+  { name: "new_alt_img", maxCount: 1 }
+]);
+
+exports.editProduct = catchAsync(async (req, res, next) => {
+  const productName = req.body.name;
+  const altName = req.body.alt_name;
+  const altNewName = req.body.new_alt_name;
+  const altNewImg = req.files.new_alt_img[0];
+
+  try {
+    console.log("Uploading to cloudinary...")
+    var altNewImgUrl = await uploadImage(altNewImg.buffer);
+    
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({
+      status: "fail",
+      message: err.message,
+    });
+  }
+
+  try {
+    const product = await Product.findOneAndUpdate({name : productName, "alternatives.name": altName}, {$set : {"alternatives.$.name" : altNewName, "alternatives.$.img_url" : altNewImgUrl} }, {new:true});
+    if(!product)
+    {
+      throw new Error();
+    }
+
+    return res.status(200).json({
+      status: "success",
+      data: product
+    });
+
+  } catch (err) {
+    return res.status(404).json({
+      status: "fail",
+      message: "No such product found",
+    });
+  }
+});

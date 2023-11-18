@@ -6,7 +6,9 @@ const router = express.Router();
 router.route('/')
 .get(productController.getProducts)
 .post(productController.uploadProductPhoto,
-    productController.createProduct);
+    productController.createProduct)
+.put(productController.uploadNewAltPhoto,
+    productController.editProduct);
 
 router.route('/:id').get(productController.getAProduct);
 
